@@ -49,6 +49,60 @@ func createMember(member types.Member) (bool, string) {
 	return helpers.InsertOne(os.Getenv("COLLECTION_NAME"), bsonDoc), uuidString
 }
 
+func updateMember(member types.Member) (bool, string) {
+	uuidString, _ := common.GetUuid()
+	member.UUID = uuidString
+	member.CreatedTime = time.Now().UTC().Format("2006-01-02 03:04:05")
+	bsonDoc, err := common.ConvertToBsonM(member)
+	if err != nil {
+		return false, err.Error()
+	}
+
+	_, status := helpers.UpdateOne(os.Getenv("COLLECTION_NAME"), bson.M {"email" : member.Email}, bson.M{ "$set": bsonDoc })
+
+	return status, ""
+}
+
+func UpdateMemberHandler(w http.ResponseWriter, r *http.Request) {
+	reqBody, _ := ioutil.ReadAll(r.Body)
+	var member types.Member
+	var response types.Response
+	response.Status = 400
+	json.Unmarshal(reqBody, &member)
+	validationErrors := ValidateMember(member)
+	if  len(validationErrors) > 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		response.ErrorMessage = "ValidationErrors: "
+		for err := range validationErrors {
+			response.ErrorMessage += err
+		}
+
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	if !helpers.IsExistsObject(os.Getenv("COLLECTION_NAME"), bson.M {"email" : member.Email}) {
+		response.Status = 404
+		response.Message = "Member does not exist"
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	status, err := updateMember(member)
+
+	if status {
+		response.Status = 201
+		response.Message = "Member updated successfully"
+		w.WriteHeader(http.StatusCreated)
+	} else {
+		w.WriteHeader(http.StatusBadRequest)
+		response.ErrorMessage = err
+	}
+
+	json.NewEncoder(w).Encode(response)
+}
 
 func CreateMemberHandler(w http.ResponseWriter, r *http.Request) {
 	reqBody, _ := ioutil.ReadAll(r.Body)
@@ -135,6 +189,8 @@ func MemberHandler(w http.ResponseWriter, r *http.Request) {
 		GetMember(w, r)
 	case http.MethodPost:
 		CreateMemberHandler(w, r)
+	case http.MethodPut:
+		UpdateMemberHandler(w, r)
 	case http.MethodDelete:
 		DeleteMember(w, r)
 	default:
