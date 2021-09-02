@@ -1,3 +1,19 @@
+package handlers
+
+import (
+	"encoding/json"
+	"github.com/gorilla/mux"
+	"go-mongo-rest-api/common"
+	"go-mongo-rest-api/helpers"
+	"go-mongo-rest-api/types"
+	"go.mongodb.org/mongo-driver/bson"
+	"io/ioutil"
+	"net/http"
+	"os"
+	"strconv"
+	"time"
+)
+
 func GetMember(w http.ResponseWriter, r *http.Request) {
 	var response types.Response
 	vars := mux.Vars(r)
