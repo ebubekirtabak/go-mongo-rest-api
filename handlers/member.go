@@ -27,10 +27,29 @@ func GetMember(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+func DeleteMember(w http.ResponseWriter, r *http.Request) {
+	var response types.Response
+	vars := mux.Vars(r)
+	email := vars["email"]
+	deletedCount, status := helpers.DeleteOne(os.Getenv("COLLECTION_NAME"), bson.M{"email": email})
+	if !status {
+		response.Status = 400
+		response.ErrorMessage = "Member could not be deleted"
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	response.Status = 200
+	response.Message = strconv.FormatInt(deletedCount, 10) + " object deleted successfully"
+	json.NewEncoder(w).Encode(response)
+}
+
 func MemberHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		GetMember(w, r)
+	case http.MethodDelete:
+		DeleteMember(w, r)
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
