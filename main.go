@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"go-mongo-rest-api/common"
+	"go-mongo-rest-api/handlers"
 	"log"
 	"net/http"
 )
