@@ -16,6 +16,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 func handleRequests() {
 	router := mux.NewRouter()
 	router.HandleFunc("/", homePage)
+	router.HandleFunc("/member", handlers.MemberHandler).Methods("POST", "PUT")
 	log.Fatal(http.ListenAndServe(":3000", router))
 }
 
