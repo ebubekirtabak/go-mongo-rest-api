@@ -17,6 +17,7 @@ func handleRequests() {
 	router := mux.NewRouter()
 	router.HandleFunc("/", homePage)
 	router.HandleFunc("/member", handlers.MemberHandler).Methods("POST", "PUT")
+	router.HandleFunc("/member/{email}", handlers.MemberHandler).Methods("GET", "DELETE")
 	log.Fatal(http.ListenAndServe(":3000", router))
 }
 
