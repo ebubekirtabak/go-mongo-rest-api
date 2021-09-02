@@ -7,6 +7,7 @@ import (
 	"go-mongo-rest-api/helpers"
 	"go-mongo-rest-api/types"
 	"go.mongodb.org/mongo-driver/bson"
+	"gopkg.in/go-playground/validator.v8"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -14,6 +15,23 @@ import (
 	"time"
 )
 
+func ValidateMember(member types.Member) validator.ValidationErrors {
+	var validate *validator.Validate
+	config := &validator.Config{TagName: "validate"}
+
+	validate = validator.New(config)
+	err := validate.Struct(member)
+
+	if member.Type == "contractor" {
+		err = validate.Field(&member.DurationOfContract, "required,numeric")
+	}
+
+	if err != nil {
+		return err.(validator.ValidationErrors)
+	}
+
+	return validator.ValidationErrors{}
+}
 func GetMember(w http.ResponseWriter, r *http.Request) {
 	var response types.Response
 	vars := mux.Vars(r)
