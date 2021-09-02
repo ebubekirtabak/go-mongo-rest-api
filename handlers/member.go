@@ -32,6 +32,57 @@ func ValidateMember(member types.Member) validator.ValidationErrors {
 
 	return validator.ValidationErrors{}
 }
+
+func createMember(member types.Member) (bool, string) {
+	if helpers.IsExistsObject(os.Getenv("COLLECTION_NAME"), bson.M {"email" : member.Email}) {
+		return false, "User already exists"
+	}
+
+	uuidString, _ := common.GetUuid()
+	member.UUID = uuidString
+	member.CreatedTime = time.Now().UTC().Format("2006-01-02 03:04:05")
+	bsonDoc, err := common.ConvertToBsonM(member)
+	if err != nil {
+		return false, err.Error()
+	}
+
+	return helpers.InsertOne(os.Getenv("COLLECTION_NAME"), bsonDoc), uuidString
+}
+
+
+func CreateMemberHandler(w http.ResponseWriter, r *http.Request) {
+	reqBody, _ := ioutil.ReadAll(r.Body)
+	var member types.Member
+	var response types.Response
+	response.Status = 400
+	json.Unmarshal(reqBody, &member)
+	validationErrors := ValidateMember(member)
+	if  len(validationErrors) > 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		response.ErrorMessage = "ValidationErrors: "
+		for err := range validationErrors {
+			response.ErrorMessage += err
+		}
+
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	status, err := createMember(member)
+
+	if status {
+		response.Status = 201
+		response.Message = "Member created successfully"
+		w.WriteHeader(http.StatusCreated)
+	} else {
+		w.WriteHeader(http.StatusBadRequest)
+		response.ErrorMessage = err
+	}
+
+	json.NewEncoder(w).Encode(response)
+}
+
 func GetMember(w http.ResponseWriter, r *http.Request) {
 	var response types.Response
 	vars := mux.Vars(r)
@@ -82,6 +133,8 @@ func MemberHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		GetMember(w, r)
+	case http.MethodPost:
+		CreateMemberHandler(w, r)
 	case http.MethodDelete:
 		DeleteMember(w, r)
 	default:
