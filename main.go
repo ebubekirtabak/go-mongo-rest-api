@@ -19,6 +19,8 @@ func handleRequests() {
 	router.HandleFunc("/", homePage)
 	router.HandleFunc("/member", handlers.MemberHandler).Methods("POST", "PUT")
 	router.HandleFunc("/member/{email}", handlers.MemberHandler).Methods("GET", "DELETE")
+	router.HandleFunc("/member/find/", handlers.FindMemberHandler).Methods("GET")
+	router.HandleFunc("/member/find/{skills}&{title}", handlers.FindMemberHandler).Methods("GET")
 	log.Fatal(http.ListenAndServe(":3000", router))
 }
 
