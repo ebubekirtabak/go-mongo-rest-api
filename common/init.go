@@ -1,6 +1,7 @@
 package common
 
 import (
+	"go-mongo-rest-api/helpers"
 	"os"
 	"path"
 	"path/filepath"
@@ -9,6 +10,8 @@ import (
 
 func Init() {
 	setBasePath()
+	helpers.LoadEnvironment()
+	helpers.ConnectDatabase()
 }
 
 func setBasePath() {
